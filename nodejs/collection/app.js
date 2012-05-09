@@ -11,7 +11,11 @@ var app = module.exports = express.createServer();
 
 // for couch
 var cradle = require('cradle');
-var db = new(cradle.Connection)().database('collection-data-tasks');
+
+var connection = new(cradle.Connection)('https://aprooks.cloudant.com',443,
+{secure:true,auth:{username:'aprooks',password:'l1nux01d'}}
+  );
+var db = connection.database('collection-data-tasks');
 
 // global data
 var contentType = 'application/json';
@@ -21,8 +25,9 @@ app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'ejs');
   app.use(express.bodyParser());
+  app.use(express.logger());
   app.use(express.methodOverride());
-  app.use(app.router);
+  app.use(app.router);  
   app.use(express.static(__dirname + '/public'));
 });
 
@@ -35,16 +40,38 @@ app.configure('production', function(){
 });
 
 // register custom media type as a JSON format
-express.bodyParser.parse['application/collection+json'] = JSON.parse;
+/*express.bodyParser.parse['collection-json'] = function(input)
+{
+  console.log('parsing');
+  console.log(input.body);
+  var result;
+  return {};
+  try{
+    result = JSON.parse(input.body);
+    return result;
+  }
+  catch(err)
+  {
+    console.log('error parsing body' + err);
+    result = {};
+  }
+  return result;
+}
+*/
 
 // Routes
 
 /* handle default task list */
 app.get('/collection/tasks/', function(req, res){
-
+/*
+connection.config(function (info) {
+    console.log('callback info');
+    console.log(info);
+});
+*/
   var view = '/_design/example/_view/due_date';
   
-  db.get(view, function (err, doc) {
+  db.view('example/due_date', function (err, doc) {
     res.header('content-type',contentType);
     res.render('tasks', {
       site  : 'http://localhost:3000/collection/tasks/',
@@ -74,7 +101,7 @@ app.get('/collection/tasks/;all', function(req, res){
 
     var view = '/_design/example/_view/all';
     
-    db.get(view, function (err, doc) {
+    db.view('example/all', function (err, doc) {
     res.header('content-type',contentType);
     res.render('tasks', {
       site  : 'http://localhost:3000/collection/tasks/',
@@ -87,7 +114,7 @@ app.get('/collection/tasks/;open', function(req, res){
 
     var view = '/_design/example/_view/open';
     
-    db.get(view, function (err, doc) {
+   db.view('example/open', function (err, doc) {
     res.header('content-type',contentType);
     res.render('tasks', {
       site  : 'http://localhost:3000/collection/tasks/',
@@ -100,7 +127,7 @@ app.get('/collection/tasks/;closed', function(req, res){
 
     var view = '/_design/example/_view/closed';
     
-    db.get(view, function (err, doc) {
+    db.view('example/closed', function (err, doc) {
     res.header('content-type',contentType);
     res.render('tasks', {
       site  : 'http://localhost:3000/collection/tasks/',
@@ -120,7 +147,7 @@ app.get('/collection/tasks/;date-range', function(req, res){
      
     var view = '/_design/example/_view/due_date';   
     
-    db.get(view, options, function (err, doc) {
+    db.view('example/due_date', options, function (err, doc) {
     res.header('content-type',contentType);
     res.render('tasks', {
       site  : 'http://localhost:3000/collection/tasks/',
@@ -133,8 +160,10 @@ app.get('/collection/tasks/;date-range', function(req, res){
 /* handle single task item */
 app.get('/collection/tasks/:i', function(req, res){
 
-    var view = '/'+req.params.i;
-    
+    console.log('get /collection/tasks/:i');
+    var view = req.params.i;
+    console.log(view);
+
     db.get(view, function (err, doc) {
     res.header('content-type',contentType);
     res.header('etag',doc._rev);
@@ -149,8 +178,13 @@ app.get('/collection/tasks/:i', function(req, res){
 /* handle creating a new task */
 app.post('/collection/tasks/', function(req, res){
   
+<<<<<<< Updated upstream
   var description, completed, dateDue, data, i, x;
   
+=======
+  var description, completed, dateDue, data;
+  console.log('/collection/tasks/');
+>>>>>>> Stashed changes
   // get data array
   data = req.body.template.data; 
 
@@ -190,6 +224,19 @@ app.post('/collection/tasks/', function(req, res){
 
 /* handle updating an existing task item */
 app.put('/collection/tasks/:i', function(req, res) {
+  console.log('task update');
+  //console.log(req.body);
+  //console.log(req);
+  if(req.body.template == undefined)
+  {
+    console.log(req.body);
+    console.log('body is undefined');
+    res.status = 400;
+    res.send('huy');
+    //res.redirect('/collection/tasks/');
+    //res.return();
+    return;
+  }
 
   var idx = (req.params.i || '');
   var rev = req.header("if-match", "*");

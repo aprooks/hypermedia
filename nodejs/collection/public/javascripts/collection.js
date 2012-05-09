@@ -7,7 +7,7 @@ var cjs = function() {
   g.data = {};
   g.item = {};
   g.collectionUrl = ''; 
-  g.contentType = 'application/collection+json';
+  g.contentType = 'application/json';
   g.filterUrl = '';
 
   g.inputForm=true;
@@ -399,20 +399,39 @@ var cjs = function() {
 
       href = form.action;
       etag = form.getAttribute('etag');
-
+      console.log('submitInputForm');
       if(href)
       {
+        console.log('href in submit form');
+        console.log(href);
         ajax=new XMLHttpRequest();
         if(ajax) {
           if(etag && etag!=='') {
+            console.log('etag')
+            console.log(etag);            
             ajax.open('put',href,false);
-            ajax.setRequestHeader('if-match',etag);
+            console.log('put opened, readyState is');
+            console.log(ajax.readyState);
+            ajax.setRequestHeader('if-match',etag);            
           }
           else {
-            ajax.open('post',href,false);          
+            console.log('post openenning connection');
+            ajax.open('post',href,false); 
+            console.log('readyState is');
+            console.log(ajax.readyState);         
           }
+<<<<<<< Updated upstream
           ajax.setRequestHeader('content-type',g.contentType);
+=======
+          console.log('readyState is');
+          console.log(ajax.readyState);
+          ajax.setRequestHeader('Content-Type','application/json');
+          console.log(item);
+>>>>>>> Stashed changes
           ajax.send(item);
+          console.log(ajax);
+          console.log('readyState is');
+          console.log(ajax.readyState);
           if(ajax.status>399) {
             alert('Error sending task!\n'+ajax.status);
           }
